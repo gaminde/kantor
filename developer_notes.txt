@@ -1,0 +1,197 @@
+Kantor Language: Syntax & Examples
+
+1. Type Definitions
+
+Define a record type (a tuple with named fields and types):
+
+type Person: Record(string, int)
+type Product: Record(string, float)
+
+2. Set Definitions
+
+Define a set of tuples (records), optionally with a type:
+
+let Users: Person = {("Alice", 1), ("Bob", 2)}
+let Products: Product = {("Book", 12.99), ("Pen", 1.50)}
+let Admins: Person = {("Alice", 1)}
+let Numbers = {1, 2, 3, 4}
+let Names = {"Alice", "Bob"}
+
+3. Set Operations
+
+Union, intersection, and Cartesian product:
+
+let All = Users | Admins         // Union
+let Common = Users & Admins      // Intersection
+let Pairs = Users * Products     // Cartesian Product
+
+4. Set Comprehensions
+
+Extract or transform elements from a set:
+
+let Names = {name | (name, id) of Users}  // Extract first field from each tuple
+let Ids = {id | (name, id) of Users}      // Extract second field
+let UserTuples = {x | x of Users}         // Identity (copy)
+
+5. Filtering (planned/extendable)
+
+Filter elements by a predicate (not yet implemented, but planned):
+
+let Adults = {(name, age) | (name, age) of Users, age >= 18}
+
+6. Derived Fields (planned/extendable)
+
+Add computed fields to each tuple (not yet implemented):
+
+let EnrichedUsers = {name, age, age >= 18 as isAdult | (name, age) of Users}
+
+7. Comments
+
+Single-line comments:
+
+// This is a comment
+let X = {1, 2, 3} // Inline comment
+
+8. Immutability and Variable Shadowing
+
+All sets and values in Kantor are immutable. Once defined, a set or value cannot be changed or mutated. If you want to "update" a value, you create a new value (possibly with the same name) using set operations or comprehensions.
+
+Variable shadowing is allowed: you can re-bind a name in the same scope using let, and the new binding will shadow the previous one. This does not mutate the original value; it simply makes the name refer to the new value from that point onward.
+
+Example:
+
+let A = {1, 2, 3}
+let A = A | {4}    // Now A is {1, 2, 3, 4}; the original {1, 2, 3} is unchanged
+
+This approach keeps the language immutable and pure, while allowing convenient updates and transformations using familiar names.
+
+Set Builder Notation
+
+Kantor supports set builder notation, allowing users to define sets using curly braces, a generator, and optional filters, closely mirroring mathematical set comprehension. This makes the language expressive, readable, and familiar to anyone with a background in mathematics or data science.
+
+Example:
+
+let Adults = {
+    (name, age) |
+        (name, age) of Users,
+        age >= 18
+}
+
+This approach encourages idiomatic, readable code for complex set operations and transformations.
+
+Summary of Constructs
+
+Type definition: type Person: Record(string, int) // Old style, now Record(name: string, age: int)
+Set definition: let Users: Person = {("Alice", 1), ("Bob", 2)} // Old style
+Set (untyped): let Numbers = {1, 2, 3}
+Set union: let All = Users | Admins
+Set intersection: let Common = Users & Admins
+Cartesian product: let Pairs = Users * Products // Updated from X
+Comprehension: {name | (name, id) of Users} // Old style, now {p.name | p of Users}
+Filtering: {(name, age) | (name, age) of Users, age >= 18} // Now supported
+Derived fields: {name, age, age >= 18 as isAdult | (name, age) of Users} // Still to-do for 'as' syntax
+Comments: // This is a comment
+
+What’s Supported Now (Phase 2 Update)
+
+1. Type System
+   - Record Type Definitions:
+     - Named Fields: type TypeName: Record(fieldName1: fieldType1, ...)
+     - Example: type Student: Record(id: int, name: string, major: string)
+
+2. Data Structures & Literals
+   - Sets (Literal Sets): Unordered collection of unique elements.
+     - Syntax: {element1, element2, ...}
+     - Example: let Primes = {2, 3, 5, 7, 11}
+   - Records (Record Instance Literals): Instances of structured data.
+     - Syntax: (fieldName1: value1, ...)
+     - Internally: frozenset of (key, value) pairs.
+     - Example: (id: 101, name: "Alice", major: "CS")
+   - Tuples (Tuple Literals): Ordered, fixed-size collections.
+     - Syntax: (value1, value2, ...)
+     - Example: let Pair = (1, "apple")
+   - Basic Literals:
+     - Numbers: 123, 3.14
+     - Strings: "hello world"
+
+3. Definitions
+   - Set Definitions: Assign a name to a set expression, optionally typed.
+     - Syntax: let SetName = expression
+     - Syntax (typed): let SetName: TypeName = expression
+     - Example: let EvenNumbers = {2, 4, 6, 8, 10}
+
+4. Set Operations
+   - Union: SetA | SetB (Elements from both)
+   - Intersection: SetA & SetB (Common elements)
+   - Cross Product: SetA * SetB (Set of pairs) - Note: Operator changed from 'X' to '*'
+
+5. Set Comprehensions
+   - General Form: { output_expression | iteration_variable(s) of SourceSet, predicate_expression }
+   - Output Expressions: Define element structure (e.g., p, p.fieldName, (p.field1, p.field2)).
+     - Example: { p.name | p of Users }
+   - Iteration Variables: Take on values from SourceSet (e.g., p of Users).
+   - Predicates: Optional boolean expressions for filtering.
+     - Uses attribute access, literals, and comparison operators (==, !=, <, <=, >, >=).
+     - Example: { p | p of Users, p.age >= 18 }
+
+6. Expression Evaluation Capability (Underlying Mechanism)
+   - This is the core mechanism that allows various parts of the language to be dynamic and computed.
+   - Key Aspects:
+     - Identifier Resolution: Looking up names (e.g., Users, p).
+     - Attribute Access: Accessing fields of records (e.g., p.age).
+     - Literal Evaluation: Recognizing and using basic values (e.g., 18, "Alice").
+     - Comparison Operations: Performing comparisons (e.g., p.age >= 18).
+     - Data Structure Construction: Building new tuples, records, or sets from evaluated components.
+   - Crucial in:
+     - Predicates in Comprehensions: e.g., `p.age >= 26` is evaluated for each element.
+     - Outputs in Comprehensions: e.g., `p.name` is evaluated for each element.
+     - Literal Definitions: e.g., `let Combined = SetA | SetB`; `{(Users, "all_users")}`.
+
+To-Do:
+
+- Derived/computed fields in comprehensions with 'as' syntax
+  Example:
+  let EnrichedUsers = {name, age, age >= 18 as isAdult | (name, age) of Users}
+  (Currently, output expressions like `p.name` or `(p.name, p.age)` are supported, but not the explicit `as newField` syntax for derived fields within the same output structure directly.)
+
+- More complex pattern matching in comprehension `in_vars` (e.g., `(key, val) of SomeSetOfTuples`)
+  (Currently, `p of Users` is the primary supported iteration pattern, with attributes accessed via `p.field`.)
+
+- Add IO abstractions for data import and export.
+  Introduce `import` and `export` as built-in functions that take a format specifier and a source/target.
+  This allows Kantor to easily support new data formats and sources in a consistent way.
+
+  Example:
+
+  let Users = IO.import(JSON, "https://api.example.com/users")
+  IO.export(CSV, "adults.csv", Adults)
+
+  // Possible future extensions:
+  // let Products = IO.import(CSV, "products.csv")
+  // IO.export(JSON, "filtered.json", FilteredSet)
+
+  The first argument specifies the format (e.g., JSON, CSV, XML, SQL, etc.).
+  The second argument is the source or destination (URL, file path, etc.).
+  For export, the third argument is the set to export.
+
+  IO operations should live in a dedicated namespace to clearly distinguish effectful/external actions from pure set logic.
+  Syntax: IO.import(format, source), IO.export(format, target, set)
+  Example:
+    let Users = IO.import(JSON, "https://api.example.com/users")
+    IO.export(CSV, "adults.csv", Adults)
+  This keeps the language modular, extensible, and explicit about side effects.
+
+  Users should be able to define custom format specifiers for import/export.
+  For example, a user could register a new format:
+    register_format(MyFormat, my_format_handler)
+  And then use:
+    let Data = IO.import(MyFormat, "data.myfmt")
+    IO.export(MyFormat, "out.myfmt", Data)
+  This enables extensibility for domain-specific or proprietary data formats.
+
+- IO.import should support an optional schema argument for positional data.
+  If provided, positional data will be mapped to named fields as specified by the schema.
+  Example:
+    type User: Record(name: string, age: int, city: string, email: string, isActive: bool)
+    let Users = IO.import(CSV, "users.csv", schema=User)
+  If no schema is provided, imported data will be treated as tuples.
